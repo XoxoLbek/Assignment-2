@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Model Marketplace</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3/dist/web3.min.js"></script>
+</head>
+<body>
+    <h1>AI Model Marketplace</h1>
+    
+    <h2>List a New Model</h2>
+    <form id="listForm">
+        <input type="text" id="modelName" placeholder="Model Name" required><br>
+        <textarea id="modelDescription" placeholder="Model Description" required></textarea><br>
+        <input type="number" id="modelPrice" placeholder="Model Price (ETH)" required><br>
+        <button type="submit">List Model</button>
+    </form>
+    
+    <h2>Available Models</h2>
+    <div id="modelList"></div>
+    
+    <h2>Purchase or Rate a Model</h2>
+    <input type="number" id="purchaseModelId" placeholder="Model ID to Purchase"><br>
+    <button onclick="purchaseModel()">Purchase</button><br>
+    
+    <input type="number" id="rateModelId" placeholder="Model ID to Rate"><br>
+    <input type="number" id="rating" placeholder="Rating (1-5)" min="1" max="5"><br>
+    <button onclick="rateModel()">Rate Model</button><br>
+    
+    <h2>Model Details</h2>
+    <input type="number" id="modelDetailsId" placeholder="Model ID to View"><br>
+    <button onclick="getModelDetails()">View Details</button><br>
+    
+    <h2>Withdraw Funds</h2>
+    <button onclick="withdrawFunds()">Withdraw Funds</button><br>
+    
+    <script>
+        // Connect to Web3 and contract
+        const web3 = new Web3(Web3.givenProvider || "http://localhost:8545");
+        const contractAddress = "<your_contract_address>"; // Replace with actual address
+        const contractABI = [ /* ABI goes here */ ]; // Paste the contract ABI here
+        const contract = new web3.eth.Contract(contractABI, contractAddress);
+        
+        let userAccount;
+
+        // Get the current user's account
+        async function loadAccount() {
+            const accounts = await web3.eth.requestAccounts();
+            userAccount = accounts[0];
+        }
+        
+        // List a new AI model
+        async function listModel(event) {
+            event.preventDefault();
+            const name = document.getElementById("modelName").value;
+            const description = document.getElementById("modelDescription").value;
+            const price = web3.utils.toWei(document.getElementById("modelPrice").value, 'ether');
+            
+            await contract.methods.listModel(name, description, price).send({ from: userAccount });
+            alert('Model listed successfully!');
+        }
+
+        // Purchase an AI model
+        async function purchaseModel() {
+            const modelId = document.getElementById("purchaseModelId").value;
+            const model = await contract.methods.getModelDetails(modelId).call();
+            const price = model[2];  // Model price
+            await contract.methods.purchaseModel(modelId).send({ from: userAccount, value: price });
+            alert('Model purchased successfully!');
+        }
+
+        // Rate an AI model
+        async function rateModel() {
+            const modelId = document.getElementById("rateModelId").value;
+            const rating = document.getElementById("rating").value;
+            await contract.methods.rateModel(modelId, rating).send({ from: userAccount });
+            alert('Model rated successfully!');
+        }
+
+        // Get details of a model
+        async function getModelDetails() {
+            const modelId = document.getElementById("modelDetailsId").value;
+            const model = await contract.methods.getModelDetails(modelId).call();
+            alert(`Name: ${model[0]}, Description: ${model[1]}, Price: ${web3.utils.fromWei(model[2], 'ether')} ETH, Average Rating: ${model[4]}`);
+        }
+
+        // Withdraw funds
+        async function withdrawFunds() {
+            await contract.methods.withdrawFunds().send({ from: userAccount });
+            alert('Funds withdrawn successfully!');
+        }
+
+        // Initialize the app
+        loadAccount();
+        document.getElementById('listForm').addEventListener('submit', listModel);
+    </script>
+</body>
+</html>
