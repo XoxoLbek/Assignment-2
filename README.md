@@ -1,0 +1,1 @@
+I built a decentralized application (dApp) for an AI model marketplace that allows users to list, buy, and rate AI models. A smart contract manages the core functionality, and the frontend provides a convenient interface for interacting with the contract.
